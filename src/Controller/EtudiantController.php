@@ -2,7 +2,9 @@
 
 namespace App\Controller;
 
+use App\Entity\Classe;
 use App\Entity\Etudiant;
+use App\Entity\User;
 use App\Form\EtudiantType;
 use App\Repository\EtudiantRepository;
 
@@ -11,7 +13,9 @@ use Doctrine\ORM\EntityManagerInterface;
 
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Serializer\SerializerInterface;
@@ -27,25 +31,31 @@ class EtudiantController extends AbstractController
     private $etudiantRepository;
     private $objectManager;
 
-    public function __construct(EtudiantRepository $etudiantRepository, EntityManagerInterface $objectManager)
+    public function __construct(EtudiantRepository $etudiantRepository, EntityManagerInterface $objectManager, RequestStack $request)
     {
         $this->etudiantRepository = $etudiantRepository;
         $this->objectManager = $objectManager;
+
+        $apiToken = $request->getCurrentRequest()->headers->get('api-token');
+        $user = $this->objectManager->getRepository(User::class)->findOneBy([
+                'apiKey' => $apiToken,
+            ]);
+        if(!$user instanceof User){
+            throw new HttpException(401, "Vous n'êtes pas autorisé"); #Si on met une bonne apikey (exemple api_key dans Tableplus(User)) on aura l'accès aux données de l'api
+        }
+        $this->user = $user;
+
     }
 
     /**
     * @Route("/etudiants", name="api_get_etudiants", methods={"GET"})
     */
-    public function getEtudiants(EtudiantRepository $etudiantRepository, SerializerInterface $serializer): Response #Mettre (SerializerInterface $serializer) pour 2e exemple // EtudiantRepository $etudiantRepository, SerializerInterface $serializer
+    public function getEtudiants(EtudiantRepository $etudiantRepository, SerializerInterface $serializer): Response
     {
-        // #Première manière
-        $etudiants = $etudiantRepository->findAll(); #Select All from TaskRepository
-        $json = $serializer->serialize($etudiants, 'json'); #Récupere task est transforme en json
-
+        $etudiants = $etudiantRepository->findAll(); #Select All from EtudiantRepository
+        $json = $serializer->serialize($etudiants, 'json'); #Récupere etudiants est transforme en json
+        
         return new Response($json); 
-
-        // $etudiants = $this->etudiantRepository->findAllByNompromo($this->nompromo);
-        // return $this->json($etudiants);
     }
 
     /**

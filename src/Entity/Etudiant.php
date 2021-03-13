@@ -37,6 +37,11 @@ class Etudiant
      */
     private $anneestart;
 
+    /**
+     * @ORM\ManyToOne(targetEntity=Classe::class, inversedBy="etudiants")
+     */
+    private $nompromo;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -86,6 +91,18 @@ class Etudiant
     public function setAnneestart(string $anneestart): self
     {
         $this->anneestart = $anneestart;
+
+        return $this;
+    }
+
+    public function getNompromo(): ?Classe
+    {
+        return $this->nompromo;
+    }
+
+    public function setNompromo(?Classe $nompromo): self
+    {
+        $this->nompromo = $nompromo;
 
         return $this;
     }

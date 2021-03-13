@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Classe;
+use App\Entity\User;
 use App\Repository\ClasseRepository;
 use App\Form\ClasseFormType;
 
@@ -13,6 +14,8 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\Serializer\SerializerInterface;
 
     /**
@@ -27,10 +30,19 @@ class ClasseController extends AbstractController
     private $classeRepository;
     private $objectManager;
 
-    public function __construct(ClasseRepository $classeRepository, EntityManagerInterface $objectManager)
+    public function __construct(ClasseRepository $classeRepository, EntityManagerInterface $objectManager, RequestStack $request)
     {
         $this->classeRepository = $classeRepository;
         $this->objectManager = $objectManager;
+
+        $apiToken = $request->getCurrentRequest()->headers->get('api-token');
+        $user = $this->objectManager->getRepository(User::class)->findOneBy([
+                'apiKey' => $apiToken,
+            ]);
+        if(!$user instanceof User){
+            throw new HttpException(401, "Vous n'êtes pas autorisé"); #Si on met une bonne apikey (exemple api_key dans Tableplus(User)) on aura l'accès aux données de l'api
+        }
+        $this->user = $user;
     }
 
     /**
@@ -38,27 +50,14 @@ class ClasseController extends AbstractController
      * 
      * @return Response
      */
-    public function getClasses(ClasseRepository $classeRepository, SerializerInterface $serializer): Response #Mettre (SerializerInterface $serializer) pour 2e exemple
+    public function getClasses(ClasseRepository $classeRepository, SerializerInterface $serializer): Response
     {
-        #Première manière
-        $classes = $classeRepository->findAll(); #Select All from TaskRepository
-        $json = $serializer->serialize($classes, 'json'); #Récupere task est transforme en json
+        $classes = $classeRepository->findAll(); #Select All from ClasseRepository
+        $json = $serializer->serialize($classes, 'json'); #Récupere classes est transforme en json
 
         return new Response($json); 
 
-
-        // #Deuxième manière
-        // $tasks = $taskRepository->findAllAsArray();
-        // return $this->json($tasks);
-
-        // #Le most et dans config>package>framework
-        // $tasks = $this->taskRepository->findBy([
-        //     'user' => $this->user,
-        // ]);
-
-        // $classes = $this->taskRepository->findAllByUser($this->user);
-        // return $this->json($classes);
-    } #Envoie la liste des tâches
+    } #Envoie la liste des classes
 
     /**
      * @Route("/classes/{classeId}", name="api_get_classe", methods={"GET"})
@@ -71,8 +70,8 @@ class ClasseController extends AbstractController
     {
         $classe = $this->classeRepository->find($classeId);
 
-        if (!$classe instanceof Classe){ #Si la tâche est vide ça renvoie un message d'erreur
-            // return $this->error();
+        if (!$classe instanceof Classe){ #Si la classe est vide ça renvoie un message d'erreur
+            
             throw new NotFoundHttpException();
         }
 
@@ -90,8 +89,7 @@ class ClasseController extends AbstractController
     {
         $classe = $this->classeRepository->find($classeId);
 
-        if (!$classe instanceof Classe){ #Si la tâche est vide ça renvoie un message d'erreur /
-            // return $this->error();
+        if (!$classe instanceof Classe){
             throw new NotFoundHttpException();
         }
 
@@ -110,15 +108,10 @@ class ClasseController extends AbstractController
      */
     public function addClasse(Request $request): Response 
     {
-        // dd($request->request->all());
-
         $classe = new Classe;
 
-        $form = $this->createForm(ClasseFormType::class, $classe); #Partie optimisée comparé à "$classe->setName($request->request->get('name')); ..."
+        $form = $this->createForm(ClasseFormType::class, $classe);
         $form->submit($request->request->all());
-
-        // $classe->setNompromo($request->request->get('nompromo'));
-        // $classe->setAnneefin($request->request->get('anneefin')); #Non optimisée par rapport au $form au dessus
 
         $this->objectManager->persist($classe);
         $this->objectManager->flush();

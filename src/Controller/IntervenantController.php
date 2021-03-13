@@ -34,11 +34,10 @@ class IntervenantController extends AbstractController
     /**
      * @Route("/intervenants", name="api_get_intervenants", methods={"GET"})
      */
-    public function getEtudiants(SerializerInterface $serializer): Response #Mettre (SerializerInterface $serializer) pour 2e exemple
+    public function getEtudiants(SerializerInterface $serializer): Response 
     {
-        #Première manière
-        $intervenants = $this->intervenantRepository->findAll(); #Select All from TaskRepository
-        $json = $serializer->serialize($intervenants, 'json'); #Récupere task est transforme en json
+        $intervenants = $this->intervenantRepository->findAll(); #Select All from IntervenantRepository
+        $json = $serializer->serialize($intervenants, 'json'); #Récupere intervenants est transforme en json
 
         return new Response($json); 
     }

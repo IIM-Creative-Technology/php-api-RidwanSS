@@ -2,6 +2,7 @@
 
 namespace App\Repository;
 
+use App\Entity\Classe;
 use App\Entity\Etudiant;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
@@ -17,6 +18,25 @@ class EtudiantRepository extends ServiceEntityRepository
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, Etudiant::class);
+    }
+
+    public function findAllByEtudiant(Etudiant $etudiant){
+        return $this->createQueryBuilder('u')
+                    ->select('u.id, u.nom, u.prenom, u.age, u.anneestart, u.nompromo')
+                    ->setParameter('nompromo', $etudiant)
+                    ->getQuery()
+                    ->getResult();
+
+    }
+
+    public function findAllByPromo(Classe $classe){
+        return $this->createQueryBuilder('t')
+                    ->select('t.id, t.nompromo, t.anneefin')
+                    ->where('t.nompromo = :nompromo')
+                    ->setParameter('nompromo', $classe)
+                    ->getQuery()
+                    ->getResult();
+            
     }
 
     // /**
