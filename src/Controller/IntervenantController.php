@@ -2,15 +2,11 @@
 
 namespace App\Controller;
 
-use App\Entity\Classe;
-use App\Entity\Etudiant;
+use App\Entity\Intervenant;
 use App\Entity\User;
-use App\Form\EtudiantType;
-use App\Repository\EtudiantRepository;
-
-
+use App\Form\IntervenantType;
+use App\Repository\IntervenantRepository;
 use Doctrine\ORM\EntityManagerInterface;
-
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -20,20 +16,21 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Serializer\SerializerInterface;
 
-    /**
+/**
      * @Route("/api")
      */
-class EtudiantController extends AbstractController
+class IntervenantController extends AbstractController
 {
+
     /**
-    * @var EtudiantRepository
+    * @var IntervenantRepository
     */
-    private $etudiantRepository;
+    private $intervenantRepository;
     private $objectManager;
 
-    public function __construct(EtudiantRepository $etudiantRepository, EntityManagerInterface $objectManager, RequestStack $request)
+    public function __construct(IntervenantRepository $intervenantRepository, EntityManagerInterface $objectManager, RequestStack $request)
     {
-        $this->etudiantRepository = $etudiantRepository;
+        $this->intervenantRepository = $intervenantRepository;
         $this->objectManager = $objectManager;
 
         $apiToken = $request->getCurrentRequest()->headers->get('api-token');
@@ -44,7 +41,6 @@ class EtudiantController extends AbstractController
             throw new HttpException(401, "Vous n'êtes pas autorisé"); #Si on met une bonne apikey (exemple api_key dans Tableplus(User)) on aura l'accès aux données de l'api
         }
         $this->user = $user;
-
     }
 
     /**
