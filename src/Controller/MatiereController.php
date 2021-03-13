@@ -3,12 +3,15 @@
 namespace App\Controller;
 
 use App\Entity\Matiere;
+use App\Entity\User;
 use App\Form\MatiereType;
 use App\Repository\MatiereRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Serializer\SerializerInterface;
@@ -26,10 +29,19 @@ class MatiereController extends AbstractController
     private $matiereRepository;
     private $objectManager;
 
-    public function __construct(MatiereRepository $matiereRepository, EntityManagerInterface $objectManager)
+    public function __construct(MatiereRepository $matiereRepository, EntityManagerInterface $objectManager, RequestStack $request)
     {
         $this->matiereRepository = $matiereRepository;
         $this->objectManager = $objectManager;
+
+        $apiToken = $request->getCurrentRequest()->headers->get('api-token');
+        $user = $this->objectManager->getRepository(User::class)->findOneBy([
+                'apiKey' => $apiToken,
+            ]);
+        if(!$user instanceof User){
+            throw new HttpException(401, "Vous n'êtes pas autorisé"); #Si on met une bonne apikey (exemple api_key dans Tableplus(User)) on aura l'accès aux données de l'api
+        }
+        $this->user = $user;
     }
     /**
      * @Route("/matieres", name="api_get_matieres", methods={"GET"})
